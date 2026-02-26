@@ -481,10 +481,11 @@ impl TypeChecker {
                     unreachable!();
                 };
                 let return_type = *return_type;
-                for (f_arg, t_args) in f_args.iter().zip(args.clone()) {
-                    self.unify(&f_arg.ty, &t_args, span)?;
+                for (f_arg, t_arg) in f_args.iter().zip(args.clone()) {
+                    println!("{f_arg:#?}\n{t_arg:#?}");
+                    self.unify(&f_arg.ty, &t_arg, span)?;
                 }
-                println!("Got {return_type:?}\n{:#?}", self.types_module);
+
                 return_type
             }
             HirExpressionKind::Int(_) => self.types_module.int_id(),
@@ -500,6 +501,7 @@ impl TypeChecker {
                 {
                     return Ok(self.types_module.bool_id());
                 }
+
                 let lhs_ty = self.get_type_of_expr(lhs, &lhs.span.clone())?;
                 let rhs_ty = self.get_type_of_expr(rhs, &rhs.span.clone())?;
                 self.unify(&lhs_ty, &rhs_ty, span)?
@@ -606,6 +608,7 @@ impl TypeChecker {
             } => {
                 self.default_expr(rhs)?;
                 self.default_expr(lhs)?;
+
                 if op.is_logical() {
                     expr.ty = self.types_module.bool_id();
                 } else {

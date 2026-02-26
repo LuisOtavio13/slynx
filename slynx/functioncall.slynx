@@ -10,6 +10,7 @@ func person(name: str, age:int): Person {
 component Empty {}
 
 func main(): Component{
-	let p = person("Jorge", 44);
+	let q = Person(name: "maria", age: 22);
+	let p = person("Jorge", 44 + q.age);
 	Empty{}
 }
