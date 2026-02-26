@@ -8,7 +8,7 @@ use std::collections::HashMap;
 
 use crate::{
     hir::{
-        PropertyId, TypeId, VariableId,
+        DeclarationId, PropertyId, TypeId, VariableId,
         deffinitions::{
             ComponentMemberDeclaration, HirDeclaration, HirDeclarationKind, HirExpression,
             HirExpressionKind, HirStatment, HirStatmentKind, SpecializedComponent,
@@ -35,19 +35,14 @@ pub struct IntermediateRepr {
     pub props: HashMap<PropertyId, VarId>,
     ///Mapping of high level types to low level types
     pub types: HashMap<TypeId, TyId>,
+    pub functions_mapping: HashMap<DeclarationId, ContextHandle>,
     pub strings: StringPool,
 }
 
 impl IntermediateRepr {
     pub fn new() -> Self {
         Self {
-            props: HashMap::new(),
-            context_mapping: HashMap::new(),
-            types: HashMap::new(),
-            contexts: Vec::new(),
-            types_mapping: HashMap::new(),
-            strings: StringPool::new(),
-            vars: HashMap::new(),
+            ..Default::default()
         }
     }
 
@@ -89,6 +84,15 @@ impl IntermediateRepr {
                     .unwrap();
                 self.active_context()
                     .insert_expr(IntermediateExpr::identifier(varid))
+            }
+            HirExpressionKind::FunctionCall { name, args } => {
+                let args = args
+                    .into_iter()
+                    .map(|arg| self.generate_expr(arg))
+                    .collect();
+                let func_handle = *self.functions_mapping.get(&name).expect("A função deveria ser referenciada, isso tá sendo temporario mas o problema provavel uqe é hoisting");
+                self.active_context()
+                    .insert_expr(IntermediateExpr::functioncall(func_handle, args))
             }
             HirExpressionKind::Component { name, values, .. } => {
                 let name = *self.types.get(&name).unwrap();
@@ -284,6 +288,7 @@ impl IntermediateRepr {
     ) -> ContextHandle {
         let handle = ContextHandle(self.contexts.len());
         let ctx = IntermediateContext::new_function(handle, name, args, ret);
+
         self.contexts.push(ctx);
         for statment in statments {
             match statment.kind {
@@ -345,6 +350,7 @@ impl IntermediateRepr {
                     let ret = self.get_type(return_type, &module);
                     let handle = self.generate_function(argsty, ret, statments, name);
                     let ty = TyId::new();
+                    self.functions_mapping.insert(decl.id, handle);
                     self.context_mapping.insert(ty, handle);
                 }
                 HirDeclarationKind::ComponentDeclaration { props } => {

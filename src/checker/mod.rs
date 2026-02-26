@@ -61,6 +61,7 @@ impl TypeChecker {
             HirDeclarationKind::Function {
                 ref mut statments, ..
             } => {
+                self.declarations.push(decl.ty);
                 self.resolve_statments(statments, &decl.ty)?;
             }
             HirDeclarationKind::Object => {
@@ -463,6 +464,20 @@ impl TypeChecker {
         let expected = expr.ty;
 
         let calc = match expr.kind {
+            HirExpressionKind::FunctionCall {
+                name,
+                args: ref f_args,
+            } => {
+                let t = self.declarations[name.as_raw() as usize];
+                let HirType::Function { args, return_type } = self.types_module.get_type(&t) else {
+                    unreachable!();
+                };
+                let return_type = *return_type;
+                for (f_arg, t_args) in f_args.iter().zip(args.clone()) {
+                    self.unify(&f_arg.ty, &t_args, span)?;
+                }
+                return_type
+            }
             HirExpressionKind::Int(_) => self.types_module.int_id(),
             HirExpressionKind::Float(_) => self.types_module.float_id(),
             HirExpressionKind::StringLiteral(_) => self.types_module.str_id(),
@@ -535,6 +550,7 @@ impl TypeChecker {
                 }
             }
             HirExpressionKind::Bool(_) => self.types_module.bool_id(),
+
             ref un => {
                 unimplemented!("{un:?}")
             }
@@ -546,6 +562,22 @@ impl TypeChecker {
 
     fn default_expr(&mut self, expr: &mut HirExpression) -> Result<()> {
         match expr.kind {
+            HirExpressionKind::FunctionCall {
+                name,
+                args: ref f_args,
+            } => {
+                let HirType::Function { args, return_type } = self
+                    .types_module
+                    .get_type(&self.declarations[name.as_raw() as usize])
+                else {
+                    unreachable!()
+                };
+                let return_type = *return_type;
+                for (f_arg, t_args) in f_args.iter().zip(args.clone()) {
+                    self.unify(&f_arg.ty, &t_args, &f_arg.span)?;
+                }
+                expr.ty = self.unify(&expr.ty, &return_type, &expr.span)?;
+            }
             HirExpressionKind::Bool(_) => {
                 expr.ty = self.unify(&expr.ty, &self.types_module.bool_id(), &expr.span)?
             }

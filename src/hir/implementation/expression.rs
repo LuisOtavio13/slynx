@@ -6,7 +6,7 @@ use crate::{
     hir::{
         ExpressionId, SlynxHir, TypeId,
         deffinitions::{HirExpression, HirExpressionKind},
-        error::{HIRError, HIRErrorKind, InvalidTypeReason, ValueUsage},
+        error::{HIRError, HIRErrorKind},
         types::{FieldMethod, HirType},
     },
     parser::ast::{ASTExpression, ASTExpressionKind, NamedExpr, Operator, Span},
