@@ -113,19 +113,14 @@ impl TypeChecker {
                 ref mut rhs,
                 ref op,
             } => {
-                if expr.ty == self.types_module.bool_id()
-                    || matches!(op, Operator::LogicAnd | Operator::LogicOr)
-                {
-                    let lhs_ty = self.get_type_of_expr(&mut *lhs)?;
-                    self.unify(&lhs_ty, &self.types_module.bool_id(), &lhs.span)?;
-                    let rhs_ty = self.get_type_of_expr(&mut *rhs)?;
-                    self.unify(&rhs_ty, &self.types_module.bool_id(), &rhs.span)?;
-                    return Ok(self.types_module.bool_id());
-                }
-
                 let lhs_ty = self.get_type_of_expr(lhs)?;
                 let rhs_ty = self.get_type_of_expr(rhs)?;
-                self.unify(&lhs_ty, &rhs_ty, &expr.span)?
+                let out = self.unify(&lhs_ty, &rhs_ty, &expr.span)?;
+                if op.is_logical() {
+                    self.types_module.bool_id()
+                } else {
+                    out
+                }
             }
             HirExpressionKind::Identifier(_) => self.resolve(&expr.ty, &expr.span)?,
             HirExpressionKind::Component {
