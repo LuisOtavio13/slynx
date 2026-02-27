@@ -27,7 +27,7 @@ pub struct HirDeclaration {
 pub enum HirDeclarationKind {
     Object,
     Function {
-        statments: Vec<HirStatment>,
+        statements: Vec<HirStatement>,
         args: Vec<VariableId>, // Changed from HirId - function arguments are variables
         name: String,
     },
@@ -56,14 +56,14 @@ pub enum ComponentMemberDeclaration {
 
 #[derive(Debug)]
 #[repr(C)]
-pub struct HirStatment {
-    pub kind: HirStatmentKind,
+pub struct HirStatement {
+    pub kind: HirStatementKind,
     pub span: Span,
 }
 
 #[derive(Debug)]
 #[repr(C)]
-pub enum HirStatmentKind {
+pub enum HirStatementKind {
     Assign {
         lhs: HirExpression,
         value: HirExpression,

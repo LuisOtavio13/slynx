@@ -5,7 +5,7 @@ use color_eyre::eyre::Result;
 use crate::{
     hir::{
         ExpressionId, SlynxHir, TypeId,
-        deffinitions::{HirExpression, HirExpressionKind},
+        definitions::{HirExpression, HirExpressionKind},
         error::{HIRError, HIRErrorKind},
         types::{FieldMethod, HirType},
     },

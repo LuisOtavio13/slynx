@@ -2,7 +2,7 @@ use color_eyre::eyre::Result;
 
 use crate::hir::{
     PropertyId, SlynxHir,
-    deffinitions::{
+    definitions::{
         ComponentMemberDeclaration, HirDeclaration, HirDeclarationKind, SpecializedComponent,
     },
     error::{HIRError, HIRErrorKind},

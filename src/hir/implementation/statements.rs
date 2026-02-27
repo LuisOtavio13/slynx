@@ -3,9 +3,9 @@ use color_eyre::eyre::Result;
 use crate::{
     hir::{
         SlynxHir,
-        deffinitions::{HirStatment, HirStatmentKind},
+        definitions::{HirStatement, HirStatementKind},
     },
-    parser::ast::{ASTExpression, ASTExpressionKind, ASTStatment, ASTStatmentKind},
+    parser::ast::{ASTExpression, ASTExpressionKind, ASTStatement, ASTStatementKind},
 };
 
 impl SlynxHir {
@@ -21,27 +21,27 @@ impl SlynxHir {
         }
         Ok(())
     }
-    pub fn resolve_statment(&mut self, statment: ASTStatment) -> Result<HirStatment> {
-        match statment.kind {
-            ASTStatmentKind::Expression(expr) => {
+    pub fn resolve_statement(&mut self, statement: ASTStatement) -> Result<HirStatement> {
+        match statement.kind {
+            ASTStatementKind::Expression(expr) => {
                 let expr = self.resolve_expr(expr, None)?;
-                Ok(HirStatment {
+                Ok(HirStatement {
                     span: expr.span.clone(),
-                    kind: HirStatmentKind::Expression { expr },
+                    kind: HirStatementKind::Expression { expr },
                 })
             }
-            ASTStatmentKind::Assign { lhs, rhs } => {
+            ASTStatementKind::Assign { lhs, rhs } => {
                 let lhs = self.resolve_expr(lhs, None)?;
                 let rhs = self.resolve_expr(rhs, None)?;
 
-                Ok(HirStatment {
-                    kind: HirStatmentKind::Assign { lhs, value: rhs },
-                    span: statment.span,
+                Ok(HirStatement {
+                    kind: HirStatementKind::Assign { lhs, value: rhs },
+                    span: statement.span,
                 })
             }
-            ASTStatmentKind::MutableVar { name, ty, rhs } => {
+            ASTStatementKind::MutableVar { name, ty, rhs } => {
                 let typeid = ty.and_then(|t| {
-                    self.retrieve_information_of_type(&t.identifier, &statment.span)
+                    self.retrieve_information_of_type(&t.identifier, &statement.span)
                         .ok()
                         .map(|inner| inner.0)
                 });
@@ -49,17 +49,17 @@ impl SlynxHir {
 
                 let id = self.create_variable(&name, rhs.ty, true);
 
-                Ok(HirStatment {
-                    kind: HirStatmentKind::Variable {
+                Ok(HirStatement {
+                    kind: HirStatementKind::Variable {
                         name: id,
                         value: rhs,
                     },
-                    span: statment.span,
+                    span: statement.span,
                 })
             }
-            ASTStatmentKind::Var { name, ty, rhs } => {
+            ASTStatementKind::Var { name, ty, rhs } => {
                 let typeid = ty.and_then(|t| {
-                    self.retrieve_information_of_type(&t.identifier, &statment.span)
+                    self.retrieve_information_of_type(&t.identifier, &statement.span)
                         .ok()
                         .map(|inner| inner.0)
                 });
@@ -67,12 +67,12 @@ impl SlynxHir {
 
                 let id = self.create_variable(&name, rhs.ty, false);
 
-                Ok(HirStatment {
-                    kind: HirStatmentKind::Variable {
+                Ok(HirStatement {
+                    kind: HirStatementKind::Variable {
                         name: id,
                         value: rhs,
                     },
-                    span: statment.span,
+                    span: statement.span,
                 })
             }
         }

@@ -63,14 +63,14 @@ impl WebCompiler {
 
 impl SlynxCompiler for WebCompiler {
     type ExpressionType = Expr;
-    type StatmentType = Stmt;
+    type StatementType = Stmt;
     fn compile_instructions(
         &mut self,
         instructions: &[IntermediateInstruction],
         ctx: &IntermediateContext,
         ir: &IntermediateRepr,
         handle: ContextHandle,
-    ) -> Vec<Self::StatmentType> {
+    ) -> Vec<Self::StatementType> {
         let mut out = Vec::with_capacity(instructions.len());
         for inst in instructions {
             let stmt = match &inst.kind {

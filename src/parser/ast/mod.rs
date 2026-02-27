@@ -43,14 +43,14 @@ pub enum Operator {
 }
 
 #[derive(Debug)]
-///Some statment on the code, a statment not necessarily have value, in general expressions do.
-pub struct ASTStatment {
-    pub kind: ASTStatmentKind,
+///Some statement on the code, a statement not necessarily have value, in general expressions do.
+pub struct ASTStatement {
+    pub kind: ASTStatementKind,
     pub span: Span,
 }
 
 #[derive(Debug)]
-pub enum ASTStatmentKind {
+pub enum ASTStatementKind {
     Var {
         name: String,
         ty: Option<GenericIdentifier>,
@@ -95,7 +95,7 @@ pub enum ASTDeclarationKind {
         name: GenericIdentifier,
         args: Vec<TypedName>,
         return_type: GenericIdentifier,
-        body: Vec<ASTStatment>,
+        body: Vec<ASTStatement>,
     },
 }
 

@@ -2,7 +2,7 @@ use color_eyre::eyre::Result;
 
 use crate::parser::{
     Parser,
-    ast::{ASTDeclaration, ASTDeclarationKind, ASTStatment, ASTStatmentKind, Span, TypedName},
+    ast::{ASTDeclaration, ASTDeclarationKind, ASTStatement, ASTStatementKind, Span, TypedName},
     error::ParseError,
     lexer::tokens::{Token, TokenKind},
 };
@@ -68,9 +68,9 @@ impl Parser {
                         name,
                         args,
                         return_type,
-                        body: vec![ASTStatment {
+                        body: vec![ASTStatement {
                             span: expr.span.clone(),
-                            kind: ASTStatmentKind::Expression(expr),
+                            kind: ASTStatementKind::Expression(expr),
                         }],
                     },
                 })
@@ -78,7 +78,7 @@ impl Parser {
             TokenKind::LBrace => {
                 let mut body = Vec::new();
                 while !matches!(self.peek()?.kind, TokenKind::RBrace) {
-                    body.push(self.parse_statment()?);
+                    body.push(self.parse_statement()?);
                     if self.peek()?.kind == TokenKind::RBrace {
                         continue;
                     }

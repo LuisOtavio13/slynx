@@ -1,5 +1,5 @@
 pub mod declarations;
-pub mod deffinitions;
+pub mod definitions;
 pub mod error;
 pub mod id; // New module for specific IDs
 mod implementation;
@@ -15,9 +15,9 @@ use color_eyre::eyre::Result;
 use crate::{
     hir::{
         declarations::DeclarationsModule,
-        deffinitions::{
-            ComponentMemberDeclaration, HirDeclaration, HirDeclarationKind, HirStatment,
-            HirStatmentKind,
+        definitions::{
+            ComponentMemberDeclaration, HirDeclaration, HirDeclarationKind, HirStatement,
+            HirStatementKind,
         },
         error::{HIRError, HIRErrorKind},
         scopes::ScopeModule,
@@ -25,7 +25,7 @@ use crate::{
         types::{HirType, TypesModule},
     },
     parser::ast::{
-        ASTDeclaration, ASTDeclarationKind, ASTStatmentKind, ComponentMemberKind,
+        ASTDeclaration, ASTDeclarationKind, ASTStatementKind, ComponentMemberKind,
         ComponentMemberValue, Span, VisibilityModifier,
     },
 };
@@ -260,26 +260,27 @@ impl SlynxHir {
                     })
                     .collect::<Result<Vec<_>, _>>()?;
 
-                let statments = if let Some(last) = body.pop() {
-                    let mut statments = Vec::with_capacity(body.len());
-                    for ast in body {
-                        statments.push(self.resolve_statment(ast)?);
-                    }
-                    if let ASTStatmentKind::Expression(expr) = last.kind {
+                let statements = if let Some(last) = body.pop() {
+                    let mut statements = body
+                        .into_iter()
+                        .map(|ast| self.resolve_statement(ast))
+                        .collect::<Result<Vec<_>, _>>()?;
+
+                    if let ASTStatementKind::Expression(expr) = last.kind {
                         let expr = self.resolve_expr(expr, None)?;
-                        statments.push(HirStatment {
+                        statements.push(HirStatement {
                             span: expr.span.clone(),
-                            kind: HirStatmentKind::Return { expr },
+                            kind: HirStatementKind::Return { expr },
                         });
                     }
-                    statments
+                    statements
                 } else {
                     Vec::new()
                 };
 
                 self.declarations.push(HirDeclaration {
                     kind: HirDeclarationKind::Function {
-                        statments,
+                        statements,
                         args,
                         name: name.to_string(),
                     },

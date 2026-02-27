@@ -6,7 +6,7 @@ use crate::intermediate::{
 ///A trait to define how the Slynx IR will be compiled
 pub trait SlynxCompiler {
     type ExpressionType;
-    type StatmentType;
+    type StatementType;
     ///Compiles the provided `instructions`. The `ctx` and `ir` are the context of the IR and the IR itself. The provided `handle`
     ///is the handle of the current compiling context
     fn compile_instructions(
@@ -15,7 +15,7 @@ pub trait SlynxCompiler {
         ctx: &IntermediateContext,
         ir: &IntermediateRepr,
         handle: ContextHandle,
-    ) -> Vec<Self::StatmentType>;
+    ) -> Vec<Self::StatementType>;
 
     ///Compiles the provided `expr` using the given `ctx` and `ir`. The provided `handle` is the handle
     ///of the context of compiler itself, instead of the IR

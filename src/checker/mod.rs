@@ -7,9 +7,9 @@ use crate::{
     checker::error::{IncompatibleComponentReason, TypeError, TypeErrorKind},
     hir::{
         SlynxHir, TypeId, VariableId,
-        deffinitions::{
+        definitions::{
             ComponentMemberDeclaration, HirDeclaration, HirDeclarationKind, HirExpression,
-            HirExpressionKind, HirStatment, HirStatmentKind, SpecializedComponent,
+            HirExpressionKind, HirStatement, HirStatementKind, SpecializedComponent,
         },
         symbols::SymbolPointer,
         types::{FieldMethod, HirType, TypesModule},
@@ -59,9 +59,9 @@ impl TypeChecker {
     fn check_decl(&mut self, decl: &mut HirDeclaration) -> Result<()> {
         match decl.kind {
             HirDeclarationKind::Function {
-                ref mut statments, ..
+                ref mut statements, ..
             } => {
-                self.resolve_statments(statments, &decl.ty)?;
+                self.resolve_statements(statements, &decl.ty)?;
             }
             HirDeclarationKind::Object => {
                 self.declarations.push(decl.ty);
@@ -344,23 +344,27 @@ impl TypeChecker {
         Ok(())
     }
 
-    fn resolve_statments(&mut self, statments: &mut Vec<HirStatment>, ty: &TypeId) -> Result<()> {
+    fn resolve_statements(
+        &mut self,
+        statements: &mut Vec<HirStatement>,
+        ty: &TypeId,
+    ) -> Result<()> {
         let HirType::Function { return_type, .. } = self.types_module.get_type(ty).clone() else {
             unreachable!();
         };
-        for statment in statments {
-            match &mut statment.kind {
-                HirStatmentKind::Variable { value, .. } => {
+        for statement in statements {
+            match &mut statement.kind {
+                HirStatementKind::Variable { value, .. } => {
                     value.ty = self.get_type_of_expr(value, &value.span.clone())?;
                 }
-                HirStatmentKind::Return { expr } => {
-                    expr.ty = self.get_type_of_expr(expr, &statment.span)?;
-                    expr.ty = self.unify(&expr.ty, &return_type, &statment.span)?;
+                HirStatementKind::Return { expr } => {
+                    expr.ty = self.get_type_of_expr(expr, &statement.span)?;
+                    expr.ty = self.unify(&expr.ty, &return_type, &statement.span)?;
                 }
-                HirStatmentKind::Expression { expr } => {
+                HirStatementKind::Expression { expr } => {
                     expr.ty = self.get_type_of_expr(expr, &expr.span.clone())?;
                 }
-                HirStatmentKind::Assign { lhs, value } => {
+                HirStatementKind::Assign { lhs, value } => {
                     let refty = match self.types_module.get_type(&lhs.ty) {
                         HirType::Field(FieldMethod::Type(_, _)) => lhs.ty,
                         HirType::Field(FieldMethod::Variable(v, name)) => {
@@ -398,7 +402,7 @@ impl TypeChecker {
                         _ => unreachable!(),
                     };
 
-                    let ty = self.resolve(&lhs.ty, &statment.span)?;
+                    let ty = self.resolve(&lhs.ty, &statement.span)?;
                     lhs.ty = refty;
                     value.ty = self.unify(&ty, &value.ty, &value.span)?;
                 }
@@ -639,19 +643,19 @@ impl TypeChecker {
         Ok(())
     }
 
-    fn default_statment(&mut self, statment: &mut HirStatment, expected: &TypeId) -> Result<()> {
-        match &mut statment.kind {
-            HirStatmentKind::Variable { value, .. } => {
-                value.ty = self.resolve(&value.ty, &statment.span)?;
+    fn default_statement(&mut self, statement: &mut HirStatement, expected: &TypeId) -> Result<()> {
+        match &mut statement.kind {
+            HirStatementKind::Variable { value, .. } => {
+                value.ty = self.resolve(&value.ty, &statement.span)?;
             }
-            HirStatmentKind::Assign { lhs, value } => {
+            HirStatementKind::Assign { lhs, value } => {
                 let ty = self.resolve(&lhs.ty, &lhs.span)?;
                 value.ty = self.unify(&ty, &value.ty, &value.span)?;
             }
-            HirStatmentKind::Expression { expr } => self.default_expr(expr)?,
-            HirStatmentKind::Return { expr } => {
+            HirStatementKind::Expression { expr } => self.default_expr(expr)?,
+            HirStatementKind::Return { expr } => {
                 self.default_expr(expr)?;
-                let unify = self.unify(&expr.ty, expected, &statment.span)?;
+                let unify = self.unify(&expr.ty, expected, &statement.span)?;
                 expr.ty = unify;
             }
         };
@@ -662,15 +666,15 @@ impl TypeChecker {
         match decl.kind {
             HirDeclarationKind::Object => {}
             HirDeclarationKind::Function {
-                ref mut statments, ..
+                ref mut statements, ..
             } => {
                 let HirType::Function { return_type, .. } =
                     self.types_module.get_type(&decl.ty).clone()
                 else {
                     unreachable!("A function should have function type");
                 };
-                for statment in statments {
-                    self.default_statment(statment, &return_type)?;
+                for statement in statements {
+                    self.default_statement(statement, &return_type)?;
                 }
             }
             HirDeclarationKind::ComponentDeclaration { ref mut props } => {

@@ -5,7 +5,7 @@ mod expr;
 mod functions;
 pub mod lexer;
 pub mod objects;
-mod statment;
+mod statement;
 mod types;
 
 use color_eyre::eyre::{Report, Result};

@@ -9,9 +9,9 @@ use std::collections::HashMap;
 use crate::{
     hir::{
         PropertyId, TypeId, VariableId,
-        deffinitions::{
+        definitions::{
             ComponentMemberDeclaration, HirDeclaration, HirDeclarationKind, HirExpression,
-            HirExpressionKind, HirStatment, HirStatmentKind, SpecializedComponent,
+            HirExpressionKind, HirStatement, HirStatementKind, SpecializedComponent,
         },
         types::{HirType, TypesModule},
     },
@@ -273,32 +273,31 @@ impl IntermediateRepr {
             .insert_instruction(IntermediateInstruction::mov(place, idx))
             .unwrap()
     }
-
-    /// Creates a new function with the provided `name` `id` and `statments` and returns its id
+    /// Creates a new function with the provided `name` `id` and `Statements` and returns its id
     pub fn generate_function(
         &mut self,
         args: Vec<(IntermediateType, VarId)>,
         ret: IntermediateType,
-        statments: Vec<HirStatment>,
+        statements: Vec<HirStatement>,
         name: String,
     ) -> ContextHandle {
         let handle = ContextHandle(self.contexts.len());
         let ctx = IntermediateContext::new_function(handle, name, args, ret);
         self.contexts.push(ctx);
-        for statment in statments {
-            match statment.kind {
-                HirStatmentKind::Assign { lhs, value } => {
+        for statement in statements {
+            match statement.kind {
+                HirStatementKind::Assign { lhs, value } => {
                     self.generate_assign(lhs, value);
                 }
-                HirStatmentKind::Variable { name, value, .. } => {
+                HirStatementKind::Variable { name, value, .. } => {
                     let v = VarId::new();
                     self.vars.insert(name, v);
                     self.generate_var(v, value);
                 }
-                HirStatmentKind::Expression { expr } => {
+                HirStatementKind::Expression { expr } => {
                     self.generate_expr(expr);
                 }
-                HirStatmentKind::Return { expr } => {
+                HirStatementKind::Return { expr } => {
                     let id = self.generate_expr(expr);
                     self.active_context()
                         .insert_instruction(node::IntermediateInstruction::ret(id));
@@ -321,7 +320,7 @@ impl IntermediateRepr {
                     self.types_mapping.insert(tyid, ty); // Convert DeclarationId to HirId
                 }
                 HirDeclarationKind::Function {
-                    statments,
+                    statements,
                     name,
                     args,
                 } => {
@@ -343,7 +342,7 @@ impl IntermediateRepr {
                         })
                         .collect();
                     let ret = self.get_type(return_type, &module);
-                    let handle = self.generate_function(argsty, ret, statments, name);
+                    let handle = self.generate_function(argsty, ret, statements, name);
                     let ty = TyId::new();
                     self.context_mapping.insert(ty, handle);
                 }

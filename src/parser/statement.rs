@@ -2,15 +2,15 @@ use color_eyre::eyre::Result;
 
 use crate::parser::{
     Parser,
-    ast::{ASTStatment, ASTStatmentKind, Span},
+    ast::{ASTStatement, ASTStatementKind, Span},
     lexer::tokens::{Token, TokenKind},
 };
 
 impl Parser {
-    ///Parses a let statment. Until now it's only for variable declaration, so, this only parses 'let name: t = value;' or 'let name = value;', same for mut variants
+    ///Parses a let Statement. Until now it's only for variable declaration, so, this only parses 'let name: t = value;' or 'let name = value;', same for mut variants
     ///Maybe, in the future, more things will be parsed.
     ///Obs: this function should initialize right after 'let' token, and the `letstan` the span of the 'let' token
-    pub fn parse_let_statment(&mut self, letspan: Span) -> Result<ASTStatment> {
+    pub fn parse_let_statement(&mut self, letspan: Span) -> Result<ASTStatement> {
         let mut mutable = false;
         if let TokenKind::Mut = self.peek()?.kind {
             self.eat()?;
@@ -32,19 +32,19 @@ impl Parser {
         };
         self.eat()?; //eat '='
         let rhs = self.parse_expression()?;
-        Ok(ASTStatment {
+        Ok(ASTStatement {
             span: Span {
                 start: letspan.start,
                 end: rhs.span.end,
             },
             kind: if mutable {
-                ASTStatmentKind::MutableVar {
+                ASTStatementKind::MutableVar {
                     name,
                     ty: vartype,
                     rhs,
                 }
             } else {
-                ASTStatmentKind::Var {
+                ASTStatementKind::Var {
                     name,
                     ty: vartype,
                     rhs,
@@ -53,28 +53,28 @@ impl Parser {
         })
     }
 
-    pub fn parse_statment(&mut self) -> Result<ASTStatment> {
+    pub fn parse_statement(&mut self) -> Result<ASTStatement> {
         match self.peek()?.kind {
             TokenKind::Let => {
                 let span = self.eat()?.span;
-                self.parse_let_statment(span)
+                self.parse_let_statement(span)
             }
             _ => {
                 let expr = self.parse_expression()?;
                 if matches!(self.peek()?.kind, TokenKind::Eq) && expr.is_assignable() {
                     self.eat()?;
                     let rhs = self.parse_expression()?;
-                    Ok(ASTStatment {
+                    Ok(ASTStatement {
                         span: Span {
                             start: expr.span.start,
                             end: rhs.span.end,
                         },
-                        kind: ASTStatmentKind::Assign { lhs: expr, rhs },
+                        kind: ASTStatementKind::Assign { lhs: expr, rhs },
                     })
                 } else {
-                    Ok(ASTStatment {
+                    Ok(ASTStatement {
                         span: expr.span.clone(),
-                        kind: ASTStatmentKind::Expression(expr),
+                        kind: ASTStatementKind::Expression(expr),
                     })
                 }
             }
