@@ -10,11 +10,7 @@ use crate::{
     checker::error::{IncompatibleComponentReason, TypeError, TypeErrorKind},
     hir::{
         SlynxHir, TypeId, VariableId,
-<<<<<<< HEAD
         definitions::{HirDeclaration, HirDeclarationKind},
-=======
-        deffinitions::{HirDeclaration, HirDeclarationKind},
->>>>>>> dd08566 (refactor: refactored type checker to have separated files)
         symbols::SymbolPointer,
         types::{FieldMethod, HirType, TypesModule},
     },
