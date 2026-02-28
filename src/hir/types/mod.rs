@@ -4,6 +4,58 @@ pub use tys::*;
 use crate::hir::{TypeId, VariableId, symbols::SymbolPointer};
 use std::collections::HashMap;
 
+#[derive(Debug, Clone)]
+pub struct BuiltinTypes {
+    int: TypeId,
+    int_ty: HirType,
+
+    float: TypeId,
+    float_ty: HirType,
+
+    str: TypeId,
+    str_ty: HirType,
+
+    void: TypeId,
+    void_ty: HirType,
+
+    ///Won't appear on final IR, just so the type checker knows what must be inferred
+    infer: TypeId,
+    infer_ty: HirType,
+
+    generic_component: TypeId,
+    generic_component_ty: HirType,
+
+    bool: TypeId,
+    bool_ty: HirType,
+}
+
+impl Default for BuiltinTypes {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl BuiltinTypes {
+    pub fn new() -> Self {
+        Self {
+            int: TypeId::new(),
+            int_ty: HirType::Int,
+            float: TypeId::new(),
+            float_ty: HirType::Float,
+            str: TypeId::new(),
+            str_ty: HirType::Str,
+            void: TypeId::new(),
+            void_ty: HirType::Void,
+            infer: TypeId::new(),
+            infer_ty: HirType::Infer,
+            generic_component: TypeId::new(),
+            generic_component_ty: HirType::GenericComponent,
+            bool: TypeId::new(),
+            bool_ty: HirType::Bool,
+        }
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct TypesModule {
     ///A hashmap that maps a name of a global name to its type. This is not for variables, but only for global types, such as structs, functions and components
@@ -12,49 +64,47 @@ pub struct TypesModule {
     pub variables: HashMap<VariableId, TypeId>,
 
     types: Vec<HirType>,
+    builtins: BuiltinTypes,
 }
 impl TypesModule {
     pub fn new() -> Self {
-        let types = vec![
-            HirType::Int,
-            HirType::Float,
-            HirType::Str,
-            HirType::Void,
-            HirType::Infer,
-            HirType::GenericComponent,
-            HirType::Bool,
-        ];
-        //since type ids have a incremental index, it's a must to skip these, because HirType::int_id(), and the other ones are made to match this array
-        for _ in &types {
-            TypeId::new();
-        }
+        let builtins = BuiltinTypes::new();
         Self {
+            types: vec![
+                builtins.int_ty.clone(),
+                builtins.float_ty.clone(),
+                builtins.str_ty.clone(),
+                builtins.void_ty.clone(),
+                builtins.infer_ty.clone(),
+                builtins.generic_component_ty.clone(),
+                builtins.bool_ty.clone(),
+            ],
+            builtins,
             type_names: HashMap::new(),
             variables: HashMap::new(),
-            types,
         }
     }
 
     pub fn int_id(&self) -> TypeId {
-        TypeId::from_raw(0)
+        self.builtins.int
     }
     pub fn float_id(&self) -> TypeId {
-        TypeId::from_raw(1)
+        self.builtins.float
     }
     pub fn str_id(&self) -> TypeId {
-        TypeId::from_raw(2)
+        self.builtins.str
     }
     pub fn void_id(&self) -> TypeId {
-        TypeId::from_raw(3)
+        self.builtins.void
     }
     pub fn infer_id(&self) -> TypeId {
-        TypeId::from_raw(4)
+        self.builtins.infer
     }
     pub fn generic_component_id(&self) -> TypeId {
-        TypeId::from_raw(5)
+        self.builtins.generic_component
     }
     pub fn bool_id(&self) -> TypeId {
-        TypeId::from_raw(6)
+        self.builtins.bool
     }
     ///Inserts a new variable on this module
     pub fn insert_variable(&mut self, varid: VariableId, ty: TypeId) {
@@ -100,7 +150,7 @@ impl TypesModule {
             .map(|id| &mut self.types[id.as_raw() as usize])
     }
     pub fn get_type_from_ref(&self, id: &TypeId) -> &HirType {
-        if let HirType::Reference { rf, .. } = self.get_type(&id) {
+        if let HirType::Reference { rf, .. } = self.get_type(id) {
             self.get_type(rf)
         } else {
             unreachable!("The provided ref_ty should be of type Reference");

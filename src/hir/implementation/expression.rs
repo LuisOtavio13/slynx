@@ -150,8 +150,7 @@ impl SlynxHir {
                 let return_type = *return_type;
                 let exprs = args
                     .into_iter()
-                    .enumerate()
-                    .map(|(_, v)| self.resolve_expr(v, None))
+                    .map(|v| self.resolve_expr(v, None))
                     .collect::<Result<Vec<_>>>()?;
 
                 Ok(HirExpression {
@@ -311,10 +310,10 @@ impl SlynxHir {
         };
         Ok(HirExpression {
             ty: match op {
-                Operator::Star | Operator::Slash | Operator::Add | Operator::Sub => lhs.ty,
-                Operator::LogicAnd
+                Operator::Add | Operator::Sub | Operator::Star | Operator::Slash => lhs.ty,
+                Operator::Equals
+                | Operator::LogicAnd
                 | Operator::LogicOr
-                | Operator::Equals
                 | Operator::GreaterThan
                 | Operator::GreaterThanOrEqual
                 | Operator::LessThan
