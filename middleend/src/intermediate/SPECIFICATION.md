@@ -53,9 +53,9 @@ to be run, such as the reactivity their reactivity model.
 ### Structs
 The IR has implementation of operations primitives. The syntax for the deffinition of a struct can be the following:
 
-`struct %name {int, float};`
+`struct %S {int, float};`
 
-Which represents the first created struct that in slynx code would be:
+Which represents the following struct:
 
 ```
 >>>>>>> 61bf353 (chore: wrote basic specification of IR)
@@ -65,6 +65,7 @@ object S {
 }
 ```
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 Tuples(WIP) use the same method, so a tuple in slynx denotated by
 ```slynx
@@ -167,13 +168,16 @@ $entry:
  Where p0 is the first parameter and p1 the second one. The order of the names then is pN where N is the (N+1)th parameter of the function.
 =======
 Tuples use the same method, so a tuple in slynx denotated by
+=======
+Tuples(WIP) use the same method, so a tuple in slynx denotated by
+>>>>>>> 4d4941f (chore: correct some informations about structs on IR)
 ```slynx
 
 object T(int,float);
 
 ```
 
-is defined by the same way as `S`, the only thing is how their fields are accessed on the code. (Tuples must be implemented in slynx)
+is defined by the same way as `S`, the only thing is how their fields are accessed on the code. (Tuples must be implemented in slynx yet)
 
 #### Functions
 Functions are defined on the IR level as the following:
