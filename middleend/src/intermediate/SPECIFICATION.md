@@ -82,8 +82,12 @@ The IR has implementation of operations primitives. The syntax for the deffiniti
 
 Which represents the following struct:
 
+<<<<<<< HEAD
 ```
 >>>>>>> 61bf353 (chore: wrote basic specification of IR)
+=======
+```slynx
+>>>>>>> d683266 (Revise Slynx IR specification with updated syntax)
 object S {
   property_1: int,
   property_2: float
@@ -94,6 +98,7 @@ object S {
 <<<<<<< HEAD
 Tuples(WIP) use the same method, so a tuple in slynx denotated by
 ```slynx
+<<<<<<< HEAD
 object T(int,float);
 ```
 
@@ -198,8 +203,9 @@ Tuples(WIP) use the same method, so a tuple in slynx denotated by
 >>>>>>> 4d4941f (chore: correct some informations about structs on IR)
 ```slynx
 
+=======
+>>>>>>> d683266 (Revise Slynx IR specification with updated syntax)
 object T(int,float);
-
 ```
 
 is defined by the same way as `S`, the only thing is how their fields are accessed on the code. (Tuples must be implemented in slynx yet)
@@ -262,10 +268,10 @@ Which represents that it creates a temporary variable named `result` being the c
 >>>>>>> 466c733 (chore: talked about contexts, basic blocks and labels)
 Strings on the IR are represented as internalized values. On the IR they live on a separated struct called Internalizer, and their access can be made via slices. Note that this IR expects them to be UTF8, and be represented as, inside the IR
 
-```
+```slynxir
 struct %StrHandle {usize, usize}
 ```
-which in slynx would be
+which in slynx would be on slynx the equivalent to
 
 ```slynx
 struct StrHandle {
@@ -291,7 +297,7 @@ func main(): Person{
 ```
 
 on the IR it would be represented as
-```
+```slynxir
 struct %StrHandle {usize, usize}
 @str0 = "jorge"; //this is a handle to the string "jorge", but its just for readability, because internally its the %StrHandle
 
@@ -314,6 +320,7 @@ Note that termination operations do not terminate the context, but rather, the c
 
 #### Labels
 Labels are named as `$name` and represent another block that can be used run. All labels are meant to be declared inside a context and be used only by that specific context. Think of them like:
+```slynxir
 i32 main(i32){
 $entry:
   inc = addi32 p0, 1;
@@ -322,12 +329,14 @@ $end:
   twice = muli32, inc, 2;
   ret twice;
 }
+```
+
 Since a label is a named block, it needs to terminate with a termination operation.
 
 #### Functions
 Functions are defined on the IR level as the following:
-```
-int #add(int, int) {
+```slynxir
+i32 #add(i32, i32) {
 $entry:
   result = addi32 p0, p1;
   ret result;
@@ -346,17 +355,15 @@ func currency_of(money: int): Currency {
 ```
 in the IR can be represented by
 
-```
+```slynxir
+struct %Currency {i32}
 
-struct %Currency {int}
-
-%Currency currency_of(int) {
+%Currency currency_of(i32) {
 $entry:
   result = %Currency{0};
   propset result, 0, p0;
   ret result;
 }
-
 ```
 
 Which represents that it creates a temporary variable named `result` being the currency zeroed. storefield stores the value of `p0` on the first field of `result`
@@ -369,9 +376,12 @@ A component like the following:
 
 ```slynx
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
 >>>>>>> 61bf353 (chore: wrote basic specification of IR)
+=======
+>>>>>>> d683266 (Revise Slynx IR specification with updated syntax)
 func f(n: int): int {
   n * 2
 }
@@ -395,6 +405,7 @@ func main():Component {
 Can be compiled to an IR that looks like the following:
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 ```slynxir
 i32 f(i32) {
 $entry:
@@ -405,12 +416,17 @@ int f(int) {
 <<<<<<< HEAD
 >>>>>>> 61bf353 (chore: wrote basic specification of IR)
 =======
+=======
+```slynxir
+i32 f(i32) {
+>>>>>>> d683266 (Revise Slynx IR specification with updated syntax)
 $entry:
 >>>>>>> 466c733 (chore: talked about contexts, basic blocks and labels)
   result = muli32 p0, 2;
   ret result;
 }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 component %Counter(i32) {
   %count: i32 = p0;
@@ -421,6 +437,10 @@ component %Counter(int) {
 <<<<<<< HEAD
 >>>>>>> 61bf353 (chore: wrote basic specification of IR)
 =======
+=======
+component %Counter(i32) {
+  %count: i32 = p0;
+>>>>>>> d683266 (Revise Slynx IR specification with updated syntax)
   
 >>>>>>> 466c733 (chore: talked about contexts, basic blocks and labels)
   #t0: specialized Text;
@@ -443,12 +463,16 @@ $entry:
   ret Counter1
 }
 <<<<<<< HEAD
+<<<<<<< HEAD
 ```
 
 The idea is that instead of the value being optional on the IR as it's on the Slynx code, is to when the value is omitted, we instead of passing null, pass the explicitly the default value.
 =======
 
+=======
+>>>>>>> d683266 (Revise Slynx IR specification with updated syntax)
 ```
+
 The idea is that instead of the value being optional on the IR as it's on the Slynx code, is to when the value is ommited, we instead of passing null, pass the explictly the default value.
 >>>>>>> 61bf353 (chore: wrote basic specification of IR)
 For some button that updates the state, suppose the following code:
@@ -481,6 +505,7 @@ func main():Component {
 which will generate:
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 ```slynxir
 special component %Text(%StrHandle) {
   %text: %StrHandle = p0;
@@ -499,6 +524,14 @@ int f(int) {
 <<<<<<< HEAD
 >>>>>>> 61bf353 (chore: wrote basic specification of IR)
 =======
+=======
+```slynxir
+special component %Text(%StrHandle) {
+  %text: %StrHandle = p0;
+}
+
+i32 f(i32) {
+>>>>>>> d683266 (Revise Slynx IR specification with updated syntax)
 $entry:
 >>>>>>> 466c733 (chore: talked about contexts, basic blocks and labels)
   result = muli32 p0, 2;
@@ -531,9 +564,14 @@ $entry:
   ret
 }
 
+<<<<<<< HEAD
 component %Counter(int) {
   %count: int = p0;
 >>>>>>> 61bf353 (chore: wrote basic specification of IR)
+=======
+component %Counter(i32) {
+  %count: i32 = p0;
+>>>>>>> d683266 (Revise Slynx IR specification with updated syntax)
 
   #t0: specialized Text;
   #t1: specialized Text;
