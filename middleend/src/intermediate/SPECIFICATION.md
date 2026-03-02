@@ -476,8 +476,12 @@ The idea is that instead of the value being optional on the IR as it's on the Sl
 >>>>>>> d683266 (Revise Slynx IR specification with updated syntax)
 ```
 
+<<<<<<< HEAD
 The idea is that instead of the value being optional on the IR as it's on the Slynx code, is to when the value is ommited, we instead of passing null, pass the explictly the default value.
 >>>>>>> 61bf353 (chore: wrote basic specification of IR)
+=======
+The idea is that instead of the value being optional on the IR as it's on the Slynx code, is to when the value is omitted, we instead of passing null, pass the explicitly the default value.
+>>>>>>> 573388a (Update SPECIFICATION.md for clarity on default values)
 For some button that updates the state, suppose the following code:
 
 ```slynx
