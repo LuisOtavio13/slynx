@@ -60,7 +60,12 @@ impl IntermediateRepr {
                 let HirType::Struct { fields } = struct_ty else {
                     unreachable!("Field parent should resolve to a struct type");
                 };
-                self.get_type(&fields[*field_idx], module)
+                let Some(field_ty) = fields.get(*field_idx) else {
+                    unreachable!(
+                        "Field index should be in bounds during lowering. parent={parent:?}, field_idx={field_idx}"
+                    );
+                };
+                self.get_type(field_ty, module)
             }
             HirType::Field(FieldMethod::Variable(var_id, name)) => {
                 unreachable!(

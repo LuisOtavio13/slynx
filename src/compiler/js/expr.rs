@@ -15,6 +15,21 @@ use crate::{
 };
 
 impl WebCompiler {
+    fn compile_array_from_exprs(&self, values: Vec<Expr>) -> Expr {
+        Expr::Array(ArrayLit {
+            span: DUMMY_SP,
+            elems: values
+                .into_iter()
+                .map(|value| {
+                    Some(ExprOrSpread {
+                        spread: None,
+                        expr: Box::new(value),
+                    })
+                })
+                .collect(),
+        })
+    }
+
     fn compile_array_of_optional_exprs(
         &mut self,
         values: &[Option<ValueId>],
@@ -22,22 +37,17 @@ impl WebCompiler {
         ir: &IntermediateRepr,
         handle: ContextHandle,
     ) -> Expr {
-        Expr::Array(ArrayLit {
-            span: DUMMY_SP,
-            elems: values
-                .iter()
-                .map(|value| {
-                    Some(ExprOrSpread {
-                        spread: None,
-                        expr: if let Some(value) = value {
-                            Box::new(self.compile_expression(&ctx.exprs[*value], ctx, ir, handle))
-                        } else {
-                            Self::undefined()
-                        },
-                    })
-                })
-                .collect(),
-        })
+        let values = values
+            .iter()
+            .map(|value| {
+                if let Some(value) = value {
+                    self.compile_expression(&ctx.exprs[*value], ctx, ir, handle)
+                } else {
+                    *Self::undefined()
+                }
+            })
+            .collect();
+        self.compile_array_from_exprs(values)
     }
 
     fn compile_array_of_exprs(
@@ -47,23 +57,11 @@ impl WebCompiler {
         ir: &IntermediateRepr,
         handle: ContextHandle,
     ) -> Expr {
-        Expr::Array(ArrayLit {
-            span: DUMMY_SP,
-            elems: values
-                .iter()
-                .map(|value| {
-                    Some(ExprOrSpread {
-                        spread: None,
-                        expr: Box::new(self.compile_expression(
-                            &ctx.exprs[*value],
-                            ctx,
-                            ir,
-                            handle,
-                        )),
-                    })
-                })
-                .collect(),
-        })
+        let values = values
+            .iter()
+            .map(|value| self.compile_expression(&ctx.exprs[*value], ctx, ir, handle))
+            .collect();
+        self.compile_array_from_exprs(values)
     }
 
     pub fn compile_native(
