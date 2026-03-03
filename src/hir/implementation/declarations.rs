@@ -2,15 +2,12 @@ use color_eyre::eyre::Result;
 
 use crate::hir::{
     PropertyId, SlynxHir,
-    definitions::{
-        ComponentMemberDeclaration, HirDeclaration, HirDeclarationKind, SpecializedComponent,
-    },
+    definitions::{ComponentMemberDeclaration, HirDeclaration, HirDeclarationKind},
     error::{HIRError, HIRErrorKind},
     types::HirType,
 };
 use crate::parser::ast::{
-    ComponentMember, ComponentMemberKind, ComponentMemberValue, GenericIdentifier, ObjectField,
-    Span, TypedName,
+    ComponentMember, ComponentMemberKind, GenericIdentifier, ObjectField, Span, TypedName,
 };
 
 impl SlynxHir {
@@ -126,52 +123,6 @@ impl SlynxHir {
         Ok(())
     }
 
-    pub fn specialize_text(
-        &mut self,
-        values: Vec<ComponentMemberValue>,
-        span: &Span,
-    ) -> Result<SpecializedComponent> {
-        let mut text = None;
-        for value in values {
-            match value {
-                ComponentMemberValue::Assign {
-                    prop_name,
-                    rhs,
-                    span,
-                } => match prop_name.as_str() {
-                    "text" => text = Some(self.resolve_expr(rhs, None)?),
-                    _ => {
-                        return Err(HIRError {
-                            kind: HIRErrorKind::TypeNotRecognized(prop_name),
-                            span: span.clone(),
-                        }
-                        .into());
-                    }
-                },
-                ComponentMemberValue::Child(e) => {
-                    return Err(HIRError {
-                        kind: HIRErrorKind::InvalidChild { child: Box::new(e) },
-                        span: span.clone(),
-                    }
-                    .into());
-                }
-            }
-        }
-        if let Some(text) = text {
-            Ok(SpecializedComponent::Text {
-                text: Box::new(text),
-            })
-        } else {
-            Err(HIRError {
-                kind: HIRErrorKind::MissingProperty {
-                    prop_names: vec![String::from("text")],
-                },
-                span: span.clone(),
-            }
-            .into())
-        }
-    }
-
     pub fn resolve_component_defs(
         &mut self,
         def: Vec<ComponentMember>,
@@ -203,24 +154,8 @@ impl SlynxHir {
                     prop_idx += 1;
                 }
                 ComponentMemberKind::Child(child) => {
-                    match (&child.name.generic, child.name.identifier.as_str()) {
-                        (None, "Text") => {
-                            let text = self.specialize_text(child.values, &child.span)?;
-                            out.push(ComponentMemberDeclaration::Specialized(text));
-                        }
-                        _ => {
-                            let (id, _) = self.retrieve_information_of_type(
-                                &child.name.identifier,
-                                &child.span,
-                            )?;
-                            let values = self.resolve_component_members(child.values, id)?;
-                            out.push(ComponentMemberDeclaration::Child {
-                                name: id,
-                                values,
-                                span: child.span,
-                            })
-                        }
-                    }
+                    let component = self.resolve_component(child)?;
+                    out.push(component);
                 }
             }
         }

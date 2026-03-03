@@ -44,7 +44,9 @@ impl IntermediateRepr {
             v @ (HirType::Function { .. } | HirType::Struct { .. } | HirType::Component { .. }) => {
                 unreachable!("All struct types should be reference instead. Got {v:?}");
             }
-            un => unimplemented!("{un:?}"),
+            HirType::VarReference(_) | HirType::Field(_) | HirType::Infer => {
+                unreachable!("These should have been resolved during checker")
+            }
         }
     }
 }
