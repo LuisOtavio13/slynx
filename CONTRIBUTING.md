@@ -30,6 +30,13 @@ Thank you for considering contributing to Slynx! This document explains how you 
 8. Push: `git push origin feature/my-contribution`
 9. Open a Pull Request
 
+## Releases and Tags
+
+Repository releases are handled by maintainers and should be cut from `main` using
+Semantic Versioning tags such as `v0.0.1`.
+
+The full release flow is documented in [RELEASING.md](RELEASING.md).
+
 ## Code Conventions
 
 - Use `rustfmt` before committing: `cargo fmt`

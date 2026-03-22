@@ -164,8 +164,20 @@ cargo clippy
 
 The project is in active development with focus on:
 - Frontend implementation (lexer, parser, type system)
-- JavaScript code generation
+- IR and middleend design
 - Proving the multi-target compilation concept
+
+### Releases & Tags
+
+Slynx does not have a public release yet.
+
+When releases start being published, they will use Semantic Versioning tags in the
+`vX.Y.Z` format and be available through:
+
+- [GitHub Releases](https://github.com/Slynx-Language/slynx/releases)
+- [Git tags](https://github.com/Slynx-Language/slynx/tags)
+
+For the release flow itself, see [RELEASING.md](RELEASING.md).
 
 ### Roadmap
 
@@ -215,6 +227,7 @@ We welcome contributions! Slynx requires significant work to reach maturity, and
 - Read our [Contributing Guide](CONTRIBUTING.md)
 - Check out [good first issues](https://github.com/cykna/slynx/labels/good%20first%20issue)
 - Join discussions in [GitHub Issues](https://github.com/cykna/slynx/issues)
+- See [RELEASING.md](RELEASING.md) for repository version tags and release flow
 
 Areas where we need help:
 - Frontend development (parser, type system)
