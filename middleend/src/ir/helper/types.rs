@@ -4,7 +4,7 @@ use frontend::hir::{
 };
 
 use crate::{
-    IRError, IRType, IRTypeId, SlynxIR,
+    IRError, IRType, IRTypeId, Slot, SlynxIR,
     ir::{
         model::{Context, IRPointer, Instruction, InstructionType, Operand, Value},
         temp::TempIRData,
@@ -30,6 +30,10 @@ impl SlynxIR {
         })
     }
 
+    pub fn get_slot_type(&self, slot: IRPointer<Slot, 1>) -> IRTypeId {
+        self.slots[slot.ptr()].ty
+    }
+
     pub fn get_operand_type(&self, operand: IRPointer<Operand, 1>, _temp: &TempIRData) -> IRTypeId {
         match self.operands[operand.ptr()] {
             Operand::Bool(_) => self.types.bool_type(),
@@ -45,6 +49,7 @@ impl SlynxIR {
             Value::Raw(operand) => self.get_operand_type(operand.clone(), temp),
             Value::Instruction(instr) => self.get_type_of_instruction(instr.clone(), temp),
             Value::LabelArg(_) => unimplemented!("Unimplemented type for label args"),
+            Value::Slot(v) => self.get_slot_type(v.clone()),
         }
     }
 

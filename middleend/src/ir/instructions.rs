@@ -2,7 +2,8 @@ use common::Operator;
 use frontend::hir::definitions::HirExpression;
 
 use crate::{
-    IRError, IRPointer, IRTypeId, Instruction, Label, Operand, SlynxIR, Value, ir::temp::TempIRData,
+    IRError, IRPointer, IRTypeId, Instruction, Label, Operand, Slot, SlynxIR, Value,
+    ir::temp::TempIRData,
 };
 
 impl SlynxIR {
@@ -243,5 +244,26 @@ impl SlynxIR {
         };
 
         Ok(Value::Instruction(bin_instruction))
+    }
+
+    pub fn allocate(&mut self, ty: IRTypeId, temp: &TempIRData) -> IRPointer<Value, 1> {
+        let ptr = self.slots.len();
+        self.slots.push(Slot { ty });
+        let out = IRPointer::new(ptr, 1);
+        self.insert_instruction(temp.current_label(), Instruction::allocate(ty));
+        self.insert_value(Value::Slot(out))
+    }
+
+    pub fn write(
+        &mut self,
+        slot: IRPointer<Slot, 1>,
+        value: IRPointer<Value, 1>,
+        temp: &TempIRData,
+    ) -> IRPointer<Instruction, 1> {
+        let slot_type = self.slots[slot.ptr()].ty;
+        self.insert_instruction(
+            temp.current_label(),
+            Instruction::write(slot_type, slot, value),
+        )
     }
 }

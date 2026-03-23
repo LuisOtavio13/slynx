@@ -1,4 +1,3 @@
-use common::Operator;
 use frontend::hir::{
     VariableId,
     definitions::{HirExpression, HirExpressionKind, HirStatement, HirStatementKind},
@@ -148,6 +147,14 @@ impl SlynxIR {
             match &statement.kind {
                 HirStatementKind::Variable { name, value } => {
                     let value = self.get_value_for(value, temp)?;
+                    let vty = self.get_type_of_value(value.clone(), temp);
+                    let slotptr = self.allocate(vty, temp);
+                    let Value::Slot(slot) = self.get_value(slotptr) else {
+                        unreachable!("Allocate should return a value which is a Slot")
+                    };
+
+                    self.write(slot, value.clone(), temp);
+
                     temp.add_variable(*name, value);
                 }
                 HirStatementKind::Assign { .. } => {}

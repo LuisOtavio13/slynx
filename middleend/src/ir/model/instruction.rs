@@ -7,7 +7,7 @@ use super::IRPointer;
 ///understood as a variable
 pub struct Slot {
     ///The type of this slot
-    ty: IRTypeId,
+    pub(crate) ty: IRTypeId,
 }
 
 #[derive(Debug, Clone)]
@@ -63,7 +63,7 @@ pub enum InstructionType {
         else_args: IRPointer<Value>,
     },
     Allocate,
-    Write,
+    Write(IRPointer<Slot, 1>),
     Read,
     Reinterpret,
     ///Returns the operand
@@ -197,10 +197,17 @@ impl Instruction {
         }
     }
 
-    pub fn allocate(value: IRPointer<Value, 1>, ty: IRTypeId) -> Self {
+    pub fn allocate(ty: IRTypeId) -> Self {
+        Self {
+            operands: IRPointer::null(),
+            instruction_type: InstructionType::Allocate,
+            value_type: ty,
+        }
+    }
+    pub fn write(ty: IRTypeId, slot: IRPointer<Slot, 1>, value: IRPointer<Value, 1>) -> Self {
         Self {
             operands: value.with_length(),
-            instruction_type: InstructionType::Allocate,
+            instruction_type: InstructionType::Write(slot),
             value_type: ty,
         }
     }

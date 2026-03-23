@@ -28,6 +28,7 @@ pub struct SlynxIR {
     operands: Vec<Operand>,
     ///The values of this IR
     values: Vec<Value>,
+    slots: Vec<Slot>,
     types: IRTypes,
 }
 
@@ -40,6 +41,7 @@ impl SlynxIR {
             instructions: Vec::new(),
             operands: Vec::new(),
             values: Vec::new(),
+            slots: Vec::new(),
             types: IRTypes::new(),
         }
     }
