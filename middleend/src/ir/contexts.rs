@@ -192,8 +192,8 @@ impl SlynxIR {
                         Instruction::br(end_label.clone(), value.with_length(), ty),
                     );
                 }
-                temp.set_current_label(else_label);
                 if let Some(else_branch) = else_branch {
+                    temp.set_current_label(else_label);
                     for (idx, instruction) in else_branch.iter().enumerate() {
                         let value = if idx == else_branch.len() - 1
                             && let HirStatementKind::Expression { ref expr } = instruction.kind
@@ -211,9 +211,10 @@ impl SlynxIR {
                             Instruction::br(end_label.clone(), value.with_length(), ty),
                         );
                     }
-                    temp.set_current_label(end_label);
                 }
-                unimplemented!("If expression not implemented");
+                temp.set_current_label(end_label.clone());
+                let end_label = self.get_label(end_label);
+                end_label.get_argument_value(0)
             }
             HirExpressionKind::Specialized(_) => {
                 unimplemented!("Not implemented IR for specialized components");
