@@ -7,7 +7,9 @@ use std::{
 use color_eyre::{Report, eyre::Result, owo_colors::OwoColorize};
 
 use frontend::checker::{TypeChecker, error::TypeError};
-use frontend::hir::{SlynxHir, error::HIRError};
+use frontend::hir::{
+    SlynxHir, declarations::DeclarationsModule, error::HIRError, types::TypesModule,
+};
 use frontend::lexer::{Lexer, error::LexerError};
 use frontend::parser::{Parser, error::ParseError};
 use middleend::{IRError, SlynxIR};
@@ -190,6 +192,30 @@ impl SlynxContext {
         self.entry_point.to_string_lossy().to_string()
     }
 
+    fn build_ir_generation_error(
+        &self,
+        error: &IRError,
+        ir: &SlynxIR,
+        types_module: &TypesModule,
+        declarations_module: &DeclarationsModule,
+    ) -> SlynxError {
+        let source_code = self
+            .get_entry_point_source()
+            .lines()
+            .next()
+            .unwrap_or("Internal IR generation error")
+            .to_string();
+
+        SlynxError {
+            line: 1,
+            column_start: 1,
+            ty: SlynxErrorType::Compilation,
+            message: format_ir_generation_error(error, ir, types_module, declarations_module),
+            file: self.file_name(),
+            source_code,
+        }
+    }
+
     ///Compiles the code from the current contexts and returns the compilation result including the IR
     pub fn compile(self) -> Result<CompilationOutput> {
         let stream = match Lexer::tokenize(self.get_entry_point_source()) {
@@ -296,34 +322,9 @@ impl SlynxContext {
         let mut ir = SlynxIR::new(hir.symbols_module);
 
         if let Err(e) = ir.generate(hir.declarations, &types_module) {
-            match e {
-                IRError::UnrecognizedVariable(_) => {}
-                IRError::DeclarationNotRecognized(_) => {}
-                IRError::IRTypeNotRecognized(e) => {
-                    let Some(name) = types_module.get_type_name(&e).cloned() else {
-                        unreachable!(
-                            "Type {e:?} isnt recognized by the types module? Something wrong ain't right"
-                        )
-                    };
-                    let (line, column, _) = self.get_line_info(&self.entry_point, 0);
-                    return Err(SlynxError {
-                        line,
-                        column_start: column,
-                        ty: SlynxErrorType::Type,
-                        message: format!(
-                            "IR internal error: Type '{:?}' is not recognized by the IR",
-                            ir.string_pool().get_name(name)
-                        ),
-                        file: self.file_name(),
-                        source_code: "Not Required. HIR -> IR error".into(),
-                    }
-                    .into());
-                }
-            }
-            return Err(color_eyre::eyre::eyre!(format!(
-                "IR Generation Error: {:?}",
-                e
-            )));
+            return Err(self
+                .build_ir_generation_error(&e, &ir, &types_module, &hir.declarations_module)
+                .into());
         };
         let output = CompilationOutput::new(self.entry_point.as_ref(), ir);
         Ok(output)
@@ -333,5 +334,166 @@ impl SlynxContext {
         let output = self.compile()?;
         output.write()?;
         Ok(())
+    }
+}
+
+fn format_ir_generation_error(
+    error: &IRError,
+    ir: &SlynxIR,
+    types_module: &TypesModule,
+    declarations_module: &DeclarationsModule,
+) -> String {
+    match error {
+        IRError::UnrecognizedVariable(id) => {
+            if let Some(name) = types_module
+                .get_variable_name(id)
+                .copied()
+                .map(|symbol| ir.string_pool().get_name(symbol))
+            {
+                format!("IR internal error: variable '{name}' is not recognized by the IR")
+            } else {
+                format!(
+                    "IR internal error: variable id {} is not recognized by the IR",
+                    id.as_raw()
+                )
+            }
+        }
+        IRError::DeclarationNotRecognized(id) => {
+            if let Some(name) = declarations_module
+                .try_retrieve_declaration_type(*id)
+                .and_then(|ty| types_module.get_type_name(&ty).copied())
+                .map(|symbol| ir.string_pool().get_name(symbol))
+            {
+                format!("IR internal error: declaration '{name}' is not recognized by the IR")
+            } else {
+                format!(
+                    "IR internal error: declaration id {} is not recognized by the IR",
+                    id.as_raw()
+                )
+            }
+        }
+        IRError::IRTypeNotRecognized(id) => {
+            if let Some(name) = types_module
+                .get_type_name(id)
+                .copied()
+                .map(|symbol| ir.string_pool().get_name(symbol))
+            {
+                format!("IR internal error: type '{name}' is not recognized by the IR")
+            } else {
+                format!(
+                    "IR internal error: type id {} is not recognized by the IR",
+                    id.as_raw()
+                )
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::format_ir_generation_error;
+    use frontend::hir::{
+        DeclarationId, VariableId,
+        declarations::DeclarationsModule,
+        symbols::SymbolsModule,
+        types::{BUILTIN_NAMES, HirType, TypesModule},
+    };
+    use middleend::{IRError, SlynxIR};
+
+    #[test]
+    fn formats_variable_ir_errors_with_source_names() {
+        let mut symbols = SymbolsModule::new();
+        let builtins = BUILTIN_NAMES.map(|name| symbols.intern(name));
+        let variable_name = symbols.intern("count");
+        let mut types = TypesModule::new(&builtins);
+        let declarations = DeclarationsModule::new();
+        let ir = SlynxIR::new(symbols);
+
+        let variable = VariableId::from_raw(77);
+        types.insert_variable(variable, types.int_id());
+        types.set_variable_name(variable, variable_name);
+
+        assert_eq!(
+            format_ir_generation_error(
+                &IRError::UnrecognizedVariable(variable),
+                &ir,
+                &types,
+                &declarations
+            ),
+            "IR internal error: variable 'count' is not recognized by the IR"
+        );
+    }
+
+    #[test]
+    fn formats_declaration_ir_errors_with_source_names() {
+        let mut symbols = SymbolsModule::new();
+        let builtins = BUILTIN_NAMES.map(|name| symbols.intern(name));
+        let declaration_name = symbols.intern("Bordered");
+        let mut types = TypesModule::new(&builtins);
+        let mut declarations = DeclarationsModule::new();
+        let ir = SlynxIR::new(symbols);
+
+        let ty = types.insert_type(declaration_name, HirType::Component { props: Vec::new() });
+        let declaration = declarations.create_declaration(declaration_name, ty);
+
+        assert_eq!(
+            format_ir_generation_error(
+                &IRError::DeclarationNotRecognized(declaration),
+                &ir,
+                &types,
+                &declarations
+            ),
+            "IR internal error: declaration 'Bordered' is not recognized by the IR"
+        );
+    }
+
+    #[test]
+    fn formats_type_ir_errors_with_source_names() {
+        let mut symbols = SymbolsModule::new();
+        let builtins = BUILTIN_NAMES.map(|name| symbols.intern(name));
+        let type_name = symbols.intern("User");
+        let mut types = TypesModule::new(&builtins);
+        let declarations = DeclarationsModule::new();
+        let ir = SlynxIR::new(symbols);
+
+        let ty = types.insert_type(type_name, HirType::Struct { fields: Vec::new() });
+
+        assert_eq!(
+            format_ir_generation_error(
+                &IRError::IRTypeNotRecognized(ty),
+                &ir,
+                &types,
+                &declarations
+            ),
+            "IR internal error: type 'User' is not recognized by the IR"
+        );
+    }
+
+    #[test]
+    fn falls_back_to_ids_when_names_are_missing() {
+        let mut symbols = SymbolsModule::new();
+        let builtins = BUILTIN_NAMES.map(|name| symbols.intern(name));
+        let types = TypesModule::new(&builtins);
+        let declarations = DeclarationsModule::new();
+        let ir = SlynxIR::new(symbols);
+
+        assert_eq!(
+            format_ir_generation_error(
+                &IRError::UnrecognizedVariable(VariableId::from_raw(5)),
+                &ir,
+                &types,
+                &declarations
+            ),
+            "IR internal error: variable id 5 is not recognized by the IR"
+        );
+        assert_eq!(
+            format_ir_generation_error(
+                &IRError::DeclarationNotRecognized(DeclarationId::from_raw(9)),
+                &ir,
+                &types,
+                &declarations
+            ),
+            "IR internal error: declaration id 9 is not recognized by the IR"
+        );
     }
 }
