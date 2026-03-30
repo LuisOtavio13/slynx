@@ -1,0 +1,172 @@
+IntermediateRepr {
+    contexts: [
+        IntermediateContext {
+            id: ContextHandle(
+                0,
+            ),
+            exprs: [
+                IntermediateExpr {
+                    kind: Int(
+                        0,
+                    ),
+                },
+                IntermediateExpr {
+                    kind: Identifier(
+                        VarId(
+                            0,
+                        ),
+                    ),
+                },
+                IntermediateExpr {
+                    kind: Int(
+                        10,
+                    ),
+                },
+                IntermediateExpr {
+                    kind: Binary {
+                        lhs: ValueId(
+                            1,
+                        ),
+                        rhs: ValueId(
+                            2,
+                        ),
+                        operator: LessThan,
+                    },
+                },
+                IntermediateExpr {
+                    kind: Identifier(
+                        VarId(
+                            0,
+                        ),
+                    ),
+                },
+                IntermediateExpr {
+                    kind: Int(
+                        1,
+                    ),
+                },
+                IntermediateExpr {
+                    kind: Binary {
+                        lhs: ValueId(
+                            4,
+                        ),
+                        rhs: ValueId(
+                            5,
+                        ),
+                        operator: Add,
+                    },
+                },
+                IntermediateExpr {
+                    kind: While {
+                        condition: ValueId(
+                            3,
+                        ),
+                        body: [
+                            ValueId(
+                                0,
+                            ),
+                        ],
+                    },
+                },
+                IntermediateExpr {
+                    kind: Identifier(
+                        VarId(
+                            0,
+                        ),
+                    ),
+                },
+                IntermediateExpr {
+                    kind: Int(
+                        2,
+                    ),
+                },
+                IntermediateExpr {
+                    kind: Binary {
+                        lhs: ValueId(
+                            8,
+                        ),
+                        rhs: ValueId(
+                            9,
+                        ),
+                        operator: Add,
+                    },
+                },
+            ],
+            vars: [],
+            names: {},
+            ty: Function {
+                name: "main",
+                instructions: [
+                    IntermediateInstruction {
+                        kind: Alloc(
+                            VarId(
+                                0,
+                            ),
+                        ),
+                    },
+                    IntermediateInstruction {
+                        kind: Move {
+                            target: Local(
+                                VarId(
+                                    0,
+                                ),
+                            ),
+                            value: ValueId(
+                                0,
+                            ),
+                        },
+                    },
+                    IntermediateInstruction {
+                        kind: Move {
+                            target: Local(
+                                VarId(
+                                    0,
+                                ),
+                            ),
+                            value: ValueId(
+                                6,
+                            ),
+                        },
+                    },
+                    IntermediateInstruction {
+                        kind: Ret(
+                            ValueId(
+                                10,
+                            ),
+                        ),
+                    },
+                ],
+                args: [],
+                ret: Int,
+            },
+        },
+    ],
+    context_mapping: {
+        TyId(
+            0,
+        ): ContextHandle(
+            0,
+        ),
+    },
+    types_mapping: {},
+    vars: {
+        VariableId(
+            0,
+        ): VarId(
+            0,
+        ),
+    },
+    props: {},
+    types: {},
+    functions_mapping: {
+        DeclarationId(
+            0,
+        ): ContextHandle(
+            0,
+        ),
+    },
+    strings: StringPool {
+        pool: [],
+        len: 0,
+    },
+}
