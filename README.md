@@ -79,22 +79,37 @@ If you want to write the current IR output to disk, use `slynx::compile_code(...
 A small sample that matches the current repository syntax lives in [`slynx/component.slynx`](slynx/component.slynx):
 
 ```slynx
-component HelloBox {
-    pub prop seupai: float;
-    pub prop maria = 0;
 
+component Header {
     Div {
-        Text {
-            text: maria
+        Icon {
+            src: "https://github.icon.this.url.does_not_exist.com"
         }
     }
 }
 
-func main(): Component {
-    HelloBox {
-        seupai: 5.0
-        maria: 12
+component Footer {
+    Div {
+        Text {text: "Footer of page"}
     }
+}
+
+component Main {
+    Div {
+        Text {text: "Main Part"}
+    }
+}
+
+component Website {
+    Div {
+        Header {}
+        Main {}
+        Footer {}
+    }
+}
+
+func main(): Component {
+    Website {}
 }
 ```
 
@@ -144,6 +159,7 @@ Start with [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR.
 
 - [GitHub Issues](https://github.com/Slynx-Language/slynx/issues)
 - [GitHub Discussions](https://github.com/Slynx-Language/slynx/discussions)
+- [Discord Server](https://discord.gg/B4pHKHqNxG)
 
 ## License
 

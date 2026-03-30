@@ -533,6 +533,11 @@ mod tests {
             }
             "#,
         );
+        let main_symbol = hir
+            .symbols_module
+            .retrieve("main")
+            .copied()
+            .expect("main symbol should exist");
 
         let main_fn = hir
             .declarations
@@ -540,7 +545,7 @@ mod tests {
             .find(|declaration| {
                 matches!(
                     declaration.kind,
-                    HirDeclarationKind::Function { ref name, .. } if name == "main"
+                    HirDeclarationKind::Function { ref name, .. } if *name == main_symbol
                 )
             })
             .expect("main function should exist");

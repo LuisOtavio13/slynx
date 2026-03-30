@@ -73,6 +73,7 @@ impl Parser {
                         kind: ASTStatementKind::Assign { lhs: expr, rhs },
                     })
                 } else {
+                    self.set_flags(super::ParserFlags::RequireSemicolon);
                     Ok(ASTStatement {
                         span: expr.span.clone(),
                         kind: ASTStatementKind::Expression(expr),
