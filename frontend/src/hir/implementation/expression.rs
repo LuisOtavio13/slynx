@@ -294,7 +294,7 @@ impl SlynxHir {
                 let parent = self.resolve_expr(*parent, None)?;
                 let HirExpression { ref ty, .. } = parent;
                 match self.types_module.get_type(ty) {
-                    HirType::Reference { rf, .. } => {
+                    HirType::Reference { .. } => {
                         if let Some(index) = self
                             .declarations_module
                             .retrieve_object_body(*ty)
