@@ -14,6 +14,19 @@ impl Parser {
 
         self.expect(&TokenKind::LParen)?;
         let mut params = Vec::new();
+        if self.peek()?.kind == TokenKind::RParen {
+            let Token { span: last, .. } = self.expect(&TokenKind::RParen)?;
+            return Ok(ASTExpression {
+                span: Span {
+                    start: identifier.span.start,
+                    end: last.end,
+                },
+                kind: ASTExpressionKind::FunctionCall {
+                    name: identifier,
+                    args: params,
+                },
+            });
+        }
         loop {
             let param = self.parse_expression()?;
             params.push(param);

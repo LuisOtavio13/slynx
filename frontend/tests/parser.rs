@@ -113,6 +113,34 @@ func main(arg: int): int -> sum(arg, 2);
 }
 
 #[test]
+fn parses_function_call_without_arguments() {
+    let declarations = parse_source(
+        r#"
+func main(): int {
+    noop();
+    0
+}
+"#,
+    );
+
+    let body = function_body(&declarations, "main");
+    assert_eq!(body.len(), 2);
+
+    let ASTStatementKind::Expression(expr) = &body[0].kind else {
+        panic!("expected function call statement");
+    };
+    let ASTExpressionKind::FunctionCall { name, args } = &expr.kind else {
+        panic!("expected function call");
+    };
+
+    assert_eq!(name.identifier, "noop");
+    assert!(
+        args.is_empty(),
+        "zero-argument calls should parse with no args"
+    );
+}
+
+#[test]
 fn parses_object_expression_and_field_assignment() {
     let declarations = parse_source(
         r#"
