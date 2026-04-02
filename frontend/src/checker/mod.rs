@@ -406,6 +406,7 @@ mod tests {
                     HirStatementKind::Expression { expr } => expr,
                     HirStatementKind::Return { expr } => expr,
                     HirStatementKind::Assign { value, .. } => value,
+                    HirStatementKind::While { .. } => continue,
                 };
                 let HirExpressionKind::FunctionCall { args, .. } = &mut expr.kind else {
                     continue;
@@ -499,6 +500,7 @@ mod tests {
     }
 
     #[test]
+
     fn rejects_function_without_return_value_for_non_void_return_type() {
         let mut hir = load_hir_from_source(
             r#"
@@ -562,6 +564,57 @@ mod tests {
         assert!(
             matches!(statements[0].kind, HirStatementKind::Variable { .. }),
             "expected trailing let statement to stay in the body"
+        );
+    }
+
+    #[test]
+    fn rejects_while_with_non_boolean_condition() {
+        let mut hir = load_hir_from_source(
+            r#"
+            func main(): void {
+                while 10 {
+                    0;
+                }
+            }
+            "#,
+        );
+
+        let err = TypeChecker::check(&mut hir).expect_err("while conditions should require bool");
+        let type_error = err
+            .downcast_ref::<TypeError>()
+            .expect("error should come from type checker");
+
+        assert!(
+            matches!(type_error.kind, TypeErrorKind::IncompatibleTypes { .. }),
+            "expected IncompatibleTypes, got {:?}",
+            type_error.kind
+        );
+    }
+
+    #[test]
+    fn rejects_invalid_statement_inside_while_body() {
+        let mut hir = load_hir_from_source(
+            r#"
+            func takes_int(value: int): void {}
+
+            func main(): void {
+                while true {
+                    takes_int(false);
+                }
+            }
+            "#,
+        );
+
+        let err =
+            TypeChecker::check(&mut hir).expect_err("while body statements should be type-checked");
+        let type_error = err
+            .downcast_ref::<TypeError>()
+            .expect("error should come from type checker");
+
+        assert!(
+            matches!(type_error.kind, TypeErrorKind::IncompatibleTypes { .. }),
+            "expected IncompatibleTypes, got {:?}",
+            type_error.kind
         );
     }
 }
