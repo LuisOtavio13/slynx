@@ -67,6 +67,9 @@ impl SlynxIR {
         temp: &mut TempIRData,
     ) -> Result<IRPointer<Value, 1>, IRError> {
         let value = match &expr.kind {
+            HirExpressionKind::Tuple(_) => {
+                todo!()
+            }
             HirExpressionKind::StringLiteral(v) => {
                 let handle_idx = self.strings.intern(v);
                 let operand = Operand::String(handle_idx);

@@ -276,6 +276,9 @@ impl TypeChecker {
         let expected = expr.ty;
 
         let calc = match expr.kind {
+            HirExpressionKind::Tuple(_) => {
+                todo!()
+            }
             HirExpressionKind::If {
                 ref mut condition,
                 ref mut else_branch,
@@ -376,6 +379,9 @@ impl TypeChecker {
     ///Sets the default type on the provided `expr`
     pub(super) fn default_expr(&mut self, expr: &mut HirExpression) -> Result<()> {
         match expr.kind {
+            HirExpressionKind::Tuple(_) => {
+                todo!()
+            }
             HirExpressionKind::If {
                 ref mut condition,
                 ref mut then_branch,

@@ -11,8 +11,8 @@ const VOID_IDX: usize = 3;
 const INFER_IDX: usize = 4;
 const GENERIC_COMPONENT_IDX: usize = 5;
 const BOOL_IDX: usize = 6;
-
-const BUILTIN_TYPES_SIZE: usize = 7;
+const BUILTIN_TYPES_SIZE: usize = 8;
+const TUPLE_IDX: usize = 7;
 
 pub const BUILTIN_TYPES: [HirType; BUILTIN_TYPES_SIZE] = [
     HirType::Int,
@@ -22,6 +22,7 @@ pub const BUILTIN_TYPES: [HirType; BUILTIN_TYPES_SIZE] = [
     HirType::Infer,
     HirType::GenericComponent,
     HirType::Bool,
+    HirType::Tuple { fields: Vec::new() },
 ];
 pub const BUILTIN_NAMES: [&str; BUILTIN_TYPES_SIZE] = [
     "int",
@@ -31,10 +32,12 @@ pub const BUILTIN_NAMES: [&str; BUILTIN_TYPES_SIZE] = [
     "infer",
     "GenericComponent",
     "bool",
+    "tuple",
 ];
 
 #[derive(Debug, Clone)]
 pub struct BuiltinTypes {
+    tuple: TypeId,
     int: TypeId,
 
     float: TypeId,
@@ -67,6 +70,7 @@ impl BuiltinTypes {
             infer: TypeId::from_raw(INFER_IDX as u64),
             generic_component: TypeId::from_raw(GENERIC_COMPONENT_IDX as u64),
             bool: TypeId::from_raw(BOOL_IDX as u64),
+            tuple: TypeId::from_raw(TUPLE_IDX as u64),
         }
     }
 }
@@ -86,7 +90,7 @@ pub struct TypesModule {
 impl TypesModule {
     pub fn new(builtin_names: &[SymbolPointer; BUILTIN_TYPES_SIZE]) -> Self {
         // Keep builtin ids deterministic and fail fast if array order drifts.
-        debug_assert_eq!(BOOL_IDX + 1, BUILTIN_TYPES.len());
+        debug_assert_eq!(BUILTIN_TYPES_SIZE, BUILTIN_TYPES.len());
         debug_assert!(matches!(BUILTIN_TYPES[INT_IDX], HirType::Int));
         debug_assert!(matches!(BUILTIN_TYPES[FLOAT_IDX], HirType::Float));
         debug_assert!(matches!(BUILTIN_TYPES[STR_IDX], HirType::Str));
@@ -111,7 +115,9 @@ impl TypesModule {
         }
         out
     }
-
+    pub fn tuple_id(&self) -> TypeId {
+        self.builtins.tuple
+    }
     pub fn int_id(&self) -> TypeId {
         self.builtins.int
     }
