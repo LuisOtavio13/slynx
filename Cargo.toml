@@ -12,7 +12,7 @@ clap = { version = "4.5.52", features = ["derive"] }
 color-eyre={workspace=true}
 middleend = {path="./middleend"}
 frontend = {path="./frontend"}
-
+common = {path="./common"}
 [workspace]
 members = [
   ".",

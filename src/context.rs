@@ -15,6 +15,10 @@ use frontend::lexer::{Lexer, error::LexerError};
 use frontend::parser::{Parser, error::ParseError};
 use middleend::{IRError, SlynxIR};
 
+use crate::err::{
+    SlynxSuggestion, suggestions_from_hir, suggestions_from_ir, suggestions_from_lexer,
+    suggestions_from_parser, suggestions_from_type_error,
+};
 #[derive(Debug)]
 ///The type of the error that was generated
 pub enum SlynxErrorType {
@@ -46,6 +50,7 @@ pub struct SlynxError {
     ///The file path the error occuried
     file: String,
     source_code: String,
+    suggestion: Vec<SlynxSuggestion>,
 }
 impl std::error::Error for SlynxError {}
 
@@ -107,7 +112,11 @@ impl std::fmt::Display for SlynxError {
             self.file.bold()
         )?;
         writeln!(f, "{}", error_with_data)?;
-        writeln!(f, "{}", error_points)
+        writeln!(f, "{}", error_points)?;
+        for suggestion in self.suggestion.iter() {
+            writeln!(f, "-->{}", suggestion)?;
+        }
+        writeln!(f)
     }
 }
 
@@ -220,6 +229,7 @@ impl SlynxContext {
                 declarations_module,
             ),
             file: self.file_name(),
+            suggestion: suggestions_from_ir(error),
             source_code,
         }
     }
@@ -228,51 +238,59 @@ impl SlynxContext {
     pub fn compile(self) -> Result<CompilationOutput> {
         let stream = match Lexer::tokenize(self.get_entry_point_source()) {
             Ok(value) => value,
-            Err(e) => match e {
-                LexerError::MalformedNumber { init, .. } => {
-                    let (line, column, src) = self.get_line_info(&self.entry_point, init);
-                    let err = SlynxError {
-                        line,
-                        ty: SlynxErrorType::Lexer,
-                        column_start: column,
-                        message: e.to_string(),
-                        file: self.entry_point.to_string_lossy().to_string(),
-                        source_code: src.to_string(),
-                    };
-                    return Err(Report::new(err));
+            Err(e) => {
+                let suggestion = suggestions_from_lexer(&e);
+                match e {
+                    LexerError::MalformedNumber { init, .. } => {
+                        let (line, column, src) = self.get_line_info(&self.entry_point, init);
+                        let err = SlynxError {
+                            line,
+                            ty: SlynxErrorType::Lexer,
+                            column_start: column,
+                            message: e.to_string(),
+                            suggestion,
+                            file: self.entry_point.to_string_lossy().to_string(),
+                            source_code: src.to_string(),
+                        };
+                        return Err(Report::new(err));
+                    }
+                    LexerError::UnrecognizedChar { index, .. } => {
+                        let (line, column, src) = self.get_line_info(&self.entry_point, index);
+                        let err = SlynxError {
+                            line,
+                            ty: SlynxErrorType::Lexer,
+                            column_start: column,
+                            message: e.to_string(),
+                            suggestion,
+                            file: self.entry_point.to_string_lossy().to_string(),
+                            source_code: src.to_string(),
+                        };
+                        return Err(Report::new(err));
+                    }
                 }
-                LexerError::UnrecognizedChar { index, .. } => {
-                    let (line, column, src) = self.get_line_info(&self.entry_point, index);
-                    let err = SlynxError {
-                        line,
-                        ty: SlynxErrorType::Lexer,
-                        column_start: column,
-                        message: e.to_string(),
-                        file: self.entry_point.to_string_lossy().to_string(),
-                        source_code: src.to_string(),
-                    };
-                    return Err(Report::new(err));
-                }
-            },
+            }
         };
         let decls = match Parser::new(stream).parse_declarations() {
             Ok(v) => v,
             Err(e) => {
                 return match e.downcast_ref::<ParseError>() {
-                    Some(ref err @ ParseError::UnexpectedToken(token, _)) => {
+                    Some(err @ ParseError::UnexpectedToken(token, _)) => {
                         let (line, column, src) =
                             self.get_line_info(&self.entry_point, token.span.start);
+                        let suggestion = suggestions_from_parser(err);
                         let err = SlynxError {
                             line,
                             ty: SlynxErrorType::Parser,
                             column_start: column,
                             message: err.to_string(),
                             file: self.file_name(),
+                            suggestion,
                             source_code: src.to_string(),
                         };
                         Err(e.wrap_err(err))
                     }
-                    Some(ParseError::UnexpectedEndOfInput) => {
+                    Some(err @ ParseError::UnexpectedEndOfInput) => {
+                        let suggestion = suggestions_from_parser(err);
                         let (line, column, src) = self.get_line_info(
                             &self.entry_point,
                             self.lines.get(&self.entry_point).unwrap().len().max(1) - 1,
@@ -283,6 +301,7 @@ impl SlynxContext {
                             column_start: column,
                             message: e.to_string(),
                             file: self.file_name(),
+                            suggestion,
                             source_code: src.to_string(),
                         };
                         Err(e.wrap_err(err))
@@ -295,12 +314,14 @@ impl SlynxContext {
         if let Err(e) = hir.generate(decls) {
             match e.downcast_ref::<HIRError>() {
                 Some(err) => {
+                    let suggestion = suggestions_from_hir(err);
                     let (line, column, src) = self.get_line_info(&self.entry_point, err.span.start);
                     let err = SlynxError {
                         line,
                         column_start: column,
                         ty: SlynxErrorType::Hir,
                         message: e.to_string(),
+                        suggestion,
                         file: self.entry_point.to_string_lossy().to_string(),
                         source_code: src.to_string(),
                     };
@@ -312,10 +333,12 @@ impl SlynxContext {
         let types_module = match TypeChecker::check(&mut hir) {
             Err(e) => match e.downcast_ref::<TypeError>() {
                 Some(err) => {
+                    let suggestion = suggestions_from_type_error(err);
                     let (line, column, src) = self.get_line_info(&self.entry_point, err.span.start);
                     let err = SlynxError {
                         line,
                         column_start: column,
+                        suggestion,
                         ty: SlynxErrorType::Type,
                         message: e.to_string(),
                         file: self.file_name(),

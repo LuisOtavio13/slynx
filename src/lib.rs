@@ -7,6 +7,9 @@ pub use frontend::hir;
 pub use frontend::lexer;
 pub use frontend::parser;
 
+pub mod err;
+pub use err::*;
+
 pub use middleend;
 use middleend::*;
 
