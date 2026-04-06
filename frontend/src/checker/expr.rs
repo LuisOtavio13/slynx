@@ -1,5 +1,3 @@
-use std::num::TryFromIntError;
-
 use color_eyre::eyre::Result;
 
 use super::TypeChecker;
