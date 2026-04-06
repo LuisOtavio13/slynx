@@ -173,15 +173,10 @@ impl SlynxHir {
     fn hoist(&mut self, ast: &ASTDeclaration) -> Result<()> {
         match &ast.kind {
             ASTDeclarationKind::Alias { name, target } => {
-                let target_id = self.get_typeid_of_name(&target.identifier, &target.span)?;
+                self.symbols_module.intern(&target.identifier);
                 let symbol = self.symbols_module.intern(&name.identifier);
-                self.types_module.insert_type(
-                    symbol,
-                    HirType::Reference {
-                        rf: target_id,
-                        generics: Vec::new(),
-                    },
-                );
+                let ty = self.types_module.insert_type(symbol, HirType::Int);
+                self.declarations_module.create_declaration(symbol, ty);
             }
             ASTDeclarationKind::ObjectDeclaration { name, fields } => {
                 self.hoist_object(name, fields)?
@@ -324,13 +319,25 @@ impl SlynxHir {
                 self.scope_module.exit_scope();
             }
             ASTDeclarationKind::Alias { name, target } => {
-                self.symbols_module.intern(&name.identifier);
-                let symbol = self.symbols_module.intern(&target.identifier);
-                let ty = if let Some(data) = self
+                let target_ty = self.get_typeid_of_name(&target.identifier, &target.span)?;
+
+                let alias_name = self.symbols_module.intern(&name.identifier);
+                let Some(alias_ty) = self.types_module.get_type_from_name_mut(&alias_name) else {
+                    return Err(HIRError {
+                        kind: HIRErrorKind::NameNotRecognized(name.identifier),
+                        span: name.span,
+                    }
+                    .into());
+                };
+                *alias_ty = HirType::Reference {
+                    rf: target_ty,
+                    generics: Vec::new(),
+                };
+                let (decl, ty) = if let Some(data) = self
                     .declarations_module
-                    .retrieve_declaration_data_by_name(&symbol)
+                    .retrieve_declaration_data_by_name(&alias_name)
                 {
-                    data.1
+                    data
                 } else {
                     return Err(HIRError {
                         kind: HIRErrorKind::NameNotRecognized(name.identifier),
@@ -339,7 +346,7 @@ impl SlynxHir {
                     .into());
                 };
                 self.declarations.push(HirDeclaration {
-                    id: DeclarationId::new(),
+                    id: decl,
                     kind: HirDeclarationKind::Alias,
                     ty,
                     span: ast.span,
