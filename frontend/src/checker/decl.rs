@@ -89,7 +89,7 @@ impl TypeChecker {
     /// Returns the `target` TypeId on success.
     pub(super) fn resolve_component_members(
         &mut self,
-        values: &mut Vec<ComponentMemberDeclaration>,
+        values: &mut [ComponentMemberDeclaration],
         target: TypeId,
     ) -> Result<TypeId> {
         let target_ty = self.types_module.get_type(&target).clone();

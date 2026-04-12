@@ -224,6 +224,7 @@ impl TypeChecker {
 
         Ok(())
     }
+    /// Resolves a while statement, checking that the condition is a boolean and the body is a sequence of statements.
     fn resolve_statement_while(
         &mut self,
         condition: &mut HirExpression,
@@ -238,6 +239,7 @@ impl TypeChecker {
         self.resolve_statements(body, ty)?;
         Ok(())
     }
+    /// Resolves an assignment statement, checking that the types match.
     fn resolve_statement_assign(
         &mut self,
         lhs: &mut HirExpression,
