@@ -2,10 +2,12 @@ mod components;
 mod functions;
 mod irtype;
 mod structs;
+mod tuple;
 pub use components::*;
 pub use functions::*;
 pub use irtype::*;
 pub use structs::*;
+pub use tuple::*;
 
 pub const BUILTIN_TYPES: &[IRType] = &[
     IRType::I8,
@@ -29,6 +31,7 @@ pub const BUILTIN_TYPES: &[IRType] = &[
 #[derive(Debug, Default)]
 pub struct IRTypes {
     types: Vec<IRType>,
+
     structs: Vec<IRStruct>,
     functions: Vec<IRFunction>,
     components: Vec<IRComponent>,
@@ -166,5 +169,26 @@ impl IRTypes {
         let out = self.types.len();
         self.types.push(IRType::Function(IRFunctionId(fout)));
         IRTypeId(out)
+    }
+    pub fn create_or_get_tuple(&mut self, elements: Vec<IRTypeId>) -> IRTypeId {
+        for (i, strukt) in self.structs.iter().enumerate() {
+            if strukt.get_fields() == elements {
+                return IRTypeId(
+                    self.types
+                        .iter()
+                        .position(|t| matches!(t, IRType::Struct(id) if id.0 == i))
+                        .unwrap(),
+                );
+            }
+        }
+        let mut s = IRStruct::new();
+        for field in elements {
+            s.insert_field(field);
+        }
+        let sid = IRStructId(self.structs.len());
+        self.structs.push(s);
+        let tid = IRTypeId(self.types.len());
+        self.types.push(IRType::Struct(sid));
+        tid
     }
 }

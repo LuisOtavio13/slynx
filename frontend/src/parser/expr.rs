@@ -131,7 +131,41 @@ impl Parser {
             expr,
         })
     }
+    ///Parses a tuple expression, which follows the rule (expr, expr, expr) or ()
+    pub fn parse_tuple(&mut self, start_span: &Span) -> Result<ASTExpression> {
+        if self.peek()?.kind == TokenKind::RParen {
+            let end = self.eat()?;
+            return Ok(ASTExpression {
+                kind: ASTExpressionKind::Tuple(vec![]),
+                span: Span {
+                    start: start_span.start,
+                    end: end.span.end,
+                },
+            });
+        }
 
+        let first = self.parse_expression()?;
+        if self.peek()?.kind == TokenKind::RParen {
+            let _ = self.eat()?;
+            return Ok(first);
+        }
+        self.expect(&TokenKind::Comma)?;
+        let mut itens = vec![first];
+        while self.peek()?.kind != TokenKind::RParen {
+            itens.push(self.parse_expression()?);
+            if self.peek()?.kind == TokenKind::Comma {
+                self.eat()?;
+            }
+        }
+        let end = self.expect(&TokenKind::RParen)?;
+        Ok(ASTExpression {
+            kind: ASTExpressionKind::Tuple(itens),
+            span: Span {
+                start: start_span.start,
+                end: end.span.end,
+            },
+        })
+    }
     ///Parses an object expression, which follows the rule Object(field: expr, field: value)
     pub fn parse_object_expression(&mut self) -> Result<ASTExpression> {
         let name = self.parse_type()?;
@@ -232,8 +266,7 @@ impl Parser {
                     span: current.span,
                 }),
                 TokenKind::LParen => {
-                    let expr = self.parse_expression()?;
-                    self.expect(&TokenKind::RParen)?;
+                    let expr = self.parse_tuple(&current.span)?;
                     Ok(expr)
                 }
 

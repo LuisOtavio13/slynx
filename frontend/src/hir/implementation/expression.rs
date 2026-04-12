@@ -111,6 +111,29 @@ impl SlynxHir {
         ty: Option<TypeId>,
     ) -> Result<HirExpression> {
         match expr.kind {
+            ASTExpressionKind::Tuple(vector) => {
+                let mut types = Vec::new();
+                let mut hir_elements = Vec::new();
+                for element in vector {
+                    let resolved = self.resolve_expr(element, None)?;
+                    types.push(resolved.ty);
+                    hir_elements.push(resolved);
+                }
+                let tuple_ty = self
+                    .types_module
+                    .insert_unnamed_type(HirType::Tuple { fields: types });
+
+                Ok(HirExpression {
+                    id: ExpressionId::new(),
+                    ty: tuple_ty,
+                    kind: HirExpressionKind::Tuple(hir_elements),
+                    span: expr.span,
+                })
+            }
+            ASTExpressionKind::TupleAccess { .. } => {
+                todo!("sla");
+            }
+
             ASTExpressionKind::If {
                 condition,
                 body,

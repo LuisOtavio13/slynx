@@ -33,6 +33,9 @@ pub enum HirType {
     Vector {
         ty: TypeId,
     },
+    Tuple {
+        fields: Vec<TypeId>,
+    },
     ///This reference type can be understood better explained like
     ///object Name<T> {
     ///  value: T

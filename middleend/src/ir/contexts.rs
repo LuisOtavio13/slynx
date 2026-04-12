@@ -67,6 +67,25 @@ impl SlynxIR {
         temp: &mut TempIRData,
     ) -> Result<IRPointer<Value, 1>, IRError> {
         let value = match &expr.kind {
+            HirExpressionKind::Tuple(vetor) => {
+                let values_ptrs = vetor
+                    .iter()
+                    .map(|e| self.get_value_for(e, temp))
+                    .collect::<Result<Vec<_>, _>>()?;
+                let mut element_types = Vec::with_capacity(values_ptrs.len());
+                for ptr in &values_ptrs {
+                    let ty = self.get_type_of_value(ptr.clone(), temp);
+                    element_types.push(ty);
+                }
+                let values = values_ptrs
+                    .iter()
+                    .map(|v| self.get_value(v.clone()))
+                    .collect::<Vec<_>>();
+                let values_ptr = self.insert_values(&values);
+
+                let ty = self.types.create_or_get_tuple(element_types);
+                Value::StructLiteral(ty, values_ptr)
+            }
             HirExpressionKind::StringLiteral(v) => {
                 let handle_idx = self.strings.intern(v);
                 let operand = Operand::String(handle_idx);

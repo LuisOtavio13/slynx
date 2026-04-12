@@ -101,6 +101,7 @@ pub enum HirExpressionKind {
     StringLiteral(String),
     Float(f32),
     Bool(bool),
+    Tuple(Vec<HirExpression>),
     Binary {
         lhs: Box<HirExpression>,
         op: Operator,
